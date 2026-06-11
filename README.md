@@ -1,36 +1,211 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BuySmart AI
+
+Find the smartest product for your budget.
+
+## Project Overview
+
+BuySmart AI is a Next.js application designed to help users find the best products based on their budget constraints. The project is built with modern web technologies and best practices.
+
+---
+
+## Day 1 - Project Setup & Configuration
+
+### ✅ Completed Tasks
+
+#### 1. **Fixed npm/Node.js Environment**
+   - **Issue**: `npm` command was not available in the shell PATH
+   - **Root Cause**: Node Version Manager (nvm) initialization scripts had literal `\n` escape sequences instead of newlines in shell startup files
+   - **Solution**: 
+     - Fixed `~/.zshrc` and `~/.bash_profile` with proper newline formatting
+     - Verified Node.js v24.16.0 and npm 11.13.0 are available via nvm
+   - **Result**: `npm` now works seamlessly in terminal sessions
+
+#### 2. **Project Structure Migration**
+   - **Changed**: Migrated from root `app/` directory to `src/app/` structure
+   - **Files Moved**:
+     - `app/page.tsx` → `src/app/page.tsx`
+     - `app/layout.tsx` → `src/app/layout.tsx`
+     - `app/globals.css` → `src/app/globals.css`
+     - `app/favicon.ico` → `src/app/favicon.ico`
+   - **Benefit**: Aligns with industry best practices for Next.js projects with TypeScript
+
+#### 3. **TypeScript Configuration Update**
+   - **Updated**: `tsconfig.json`
+   - **Changes**:
+     - Added `baseUrl: "."` for proper module resolution
+     - Updated path alias from `@/*` → `./src/*` (was `@/*` → `./*`)
+     - Restricted `include` to `src/**/*` for cleaner type checking
+   - **Impact**: Type safety improved and import aliases now correctly resolve to the `src/` directory
+
+#### 4. **Development Server Verification**
+   - **Tested**: Started Next.js development server with Turbopack
+   - **Command**: `npm run dev -- --turbo`
+   - **Result**: ✅ Server ready on `http://localhost:3000` in 133ms
+   - **Stack Verified**:
+     - Next.js 16.2.9 (with Turbopack)
+     - React 19.2.4
+     - Tailwind CSS 4 with PostCSS
+     - TypeScript 5
+
+#### 5. **VS Code CLI Setup**
+   - **Issue**: `code .` command was not available from terminal
+   - **Solution**: Created symlink in user-writable directory
+     - Created `~/bin/` directory
+     - Linked VS Code CLI to `~/bin/code`
+     - Updated `~/.zshrc` to include `$HOME/bin` in PATH
+   - **Result**: `code .` now works from any directory
+
+#### 6. **Homepage Component Implementation**
+   - **Updated**: `src/app/page.tsx`
+   - **New Content**:
+     ```
+     BuySmart AI (Main heading)
+     Find the smartest product for your budget. (Tagline)
+     ```
+   - **Styling**: Uses Tailwind CSS utility classes for responsive design
+   - **Removed**: Default create-next-app boilerplate content
+
+#### 7. **Git Commit**
+   - **Commit Message**: "Day 1 - BuySmart AI setup"
+   - **Commit Hash**: `854672f`
+   - **Changes Tracked**:
+     - Directory structure migration
+     - Configuration updates
+     - New homepage content
+
+---
+
+## Tech Stack
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| **Next.js** | 16.2.9 | React framework with App Router |
+| **React** | 19.2.4 | UI library |
+| **TypeScript** | 5 | Type safety |
+| **Tailwind CSS** | 4 | Utility-first styling |
+| **ESLint** | 9 | Code quality & linting |
+| **Turbopack** | Enabled | Fast bundler |
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js v24.16.0+ (via nvm)
+- npm 11.13.0+
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Navigate to project
+cd /Users/arulmanikulanthaivelu/buysmart-ai
+
+# Install dependencies
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Start dev server with Turbopack
+npm run dev -- --turbo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Or standard dev server
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+### Build & Production
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Build for production
+npm run build
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Start production server
+npm start
+```
 
-## Deploy on Vercel
+### Linting
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run lint
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Project Structure
+
+```
+buysmart-ai/
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx       # Root layout component
+│   │   ├── page.tsx         # Home page (BuySmart AI landing)
+│   │   ├── globals.css      # Global styles with Tailwind
+│   │   └── favicon.ico      # Site favicon
+├── public/                   # Static assets
+├── node_modules/            # Dependencies (auto-generated)
+├── .git/                    # Git repository
+├── next.config.ts           # Next.js configuration
+├── tsconfig.json            # TypeScript configuration
+├── tailwind.config.js       # Tailwind CSS configuration
+├── postcss.config.mjs       # PostCSS configuration
+├── eslint.config.mjs        # ESLint configuration
+├── package.json             # Project dependencies & scripts
+└── README.md               # This file
+```
+
+---
+
+## Configuration Details
+
+### TypeScript Path Aliases
+```json
+{
+  "paths": {
+    "@/*": ["./src/*"]
+  }
+}
+```
+Use `@/` prefix to import from `src/` directory for cleaner imports.
+
+### Environment
+- **Shell**: zsh (with nvm for Node.js management)
+- **OS**: macOS
+- **Package Manager**: npm
+
+---
+
+## Next Steps (Day 2+)
+
+- [ ] Create product search functionality
+- [ ] Set up API routes for backend
+- [ ] Implement database integration
+- [ ] Add product filtering by budget
+- [ ] Build user authentication
+- [ ] Deploy to production
+
+---
+
+## Git History
+
+```
+854672f (HEAD -> main) Day 1 - BuySmart AI setup
+393a76d Initial commit from Create Next App
+```
+
+---
+
+## Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+
+---
+
+**Last Updated**: June 10, 2026  
+**Status**: ✅ Day 1 Complete
+
