@@ -75,15 +75,31 @@ BuySmart AI is a Next.js application designed to help users find the best produc
 
 ---
 
-## Tech Stack
+## Day 2 - Search Form UI
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **Next.js** | 16.2.9 | React framework with App Router |
-| **React** | 19.2.4 | UI library |
-| **TypeScript** | 5 | Type safety |
-| **Tailwind CSS** | 4 | Utility-first styling |
-| **ESLint** | 9 | Code quality & linting |
+### ✅ Completed Tasks
+
+#### 1. **Created Day 2 Branch**
+   - New branch: `day-2-search-form`
+   - Purpose: build the search form UI for product recommendations
+
+#### 2. **Updated Homepage with Search Form UI**
+   - Updated `src/app/page.tsx`
+   - Added a centered search form layout using Tailwind CSS
+   - Form fields included:
+     - Category selector
+     - Budget input
+     - Country selector
+     - Priority selector
+     - Recommendation button
+   - Result: a clean Day 2 product search UI for BuySmart AI
+
+#### 3. **Committed Day 2 Work**
+   - **Commit Message**: "Day 2 - Search form UI"
+   - **Commit Hash**: `9fe56d5`
+
+---
+
 | **Turbopack** | Enabled | Fast bundler |
 
 ---
