@@ -7,11 +7,43 @@ export default function Home() {
   const [budget, setBudget] = useState("");
   const [country, setCountry] = useState("USA");
   const [priority, setPriority] = useState("Best Value for Money");
+  const [recommendation, setRecommendation] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [debugMessage, setDebugMessage] = useState("");
 
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitted(true);
+    setRecommendation("");
+    setErrorMessage("");
+    setDebugMessage("");
+
+    const response = await fetch("/api/recommend", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        category,
+        budget,
+        country,
+        priority,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      setErrorMessage(data.error || "Unknown error from API.");
+      setDebugMessage(JSON.stringify(data.debug || data, null, 2));
+      return;
+    }
+
+    setRecommendation(data.result || "No recommendation available");
+    if (data.debug) {
+      setDebugMessage(JSON.stringify(data.debug, null, 2));
+    }
   };
 
   return (
@@ -105,6 +137,34 @@ export default function Home() {
             <p>Budget: {budget}</p>
             <p>Country: {country}</p>
             <p>Priority: {priority}</p>
+          </div>
+        )}
+
+        {recommendation && (
+          <div className="mt-6 border-t pt-4">
+            <h2 className="font-bold mb-2">
+              AI Recommendation
+            </h2>
+
+            <pre className="whitespace-pre-wrap">
+              {recommendation}
+            </pre>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="mt-6 border-t pt-4 text-red-700">
+            <h2 className="font-bold mb-2">Error</h2>
+            <pre className="whitespace-pre-wrap">{errorMessage}</pre>
+          </div>
+        )}
+
+        {debugMessage && (
+          <div className="mt-6 border-t pt-4 text-sm text-slate-600">
+            <h2 className="font-bold mb-2">Debug Details</h2>
+            <pre className="whitespace-pre-wrap bg-slate-100 p-3 rounded">
+              {debugMessage}
+            </pre>
           </div>
         )}
       </div>

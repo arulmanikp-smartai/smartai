@@ -100,6 +100,33 @@ BuySmart AI is a Next.js application designed to help users find the best produc
 
 ---
 
+## Day 3 - React State & Form Submission
+
+### ✅ Completed Tasks
+
+#### 1. **Created Day 3 Branch**
+   - New branch: `day-3-state-management`
+   - Purpose: add client-side React state and submission handling
+
+#### 2. **Implemented Stateful Form Logic**
+   - Updated `src/app/page.tsx`
+   - Added `useState` hooks for:
+     - `category`
+     - `budget`
+     - `country`
+     - `priority`
+     - `submitted`
+   - Added controlled form inputs and `onChange` handlers
+   - Added a submission button that toggles display of selected values
+
+#### 3. **Verified Dev Server and Commit**
+   - Started Next.js development server with `npm run dev`
+   - Confirmed the page renders and the form updates state on interaction
+   - **Commit Message**: "Day 3 - React state and form submission"
+   - **Commit Hash**: `6440ac8`
+
+---
+
 | **Turbopack** | Enabled | Fast bundler |
 
 ---
