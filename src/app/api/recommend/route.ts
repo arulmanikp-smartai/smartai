@@ -16,32 +16,50 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { category, budget, country, priority } = body ?? {};
+    const { category, budget, currency, country, priority } = body ?? {};
 
-    if (!category || !budget || !country || !priority) {
+    if (!category || !budget || !currency || !country || !priority) {
       return NextResponse.json(
-        { error: "Missing required fields: category, budget, country, priority." },
+        { error: "Missing required fields: category, budget, currency, country, priority." },
         { status: 400 }
       );
     }
 
     const prompt = `
-You are BuySmart AI.
+Return ONLY valid JSON. Do not include markdown. Do not include explanations. Do not wrap the JSON in code fences.
 
-Category: ${category}
-Budget: ${budget}
-Country: ${country}
-Priority: ${priority}
+Return exactly this structure with three recommendations:
 
-Recommend the top 3 products.
+{
+  "recommendations": [
+    {
+      "name": "Product name",
+      "price": "Price with currency",
+      "reason": "Short reason",
+      "pros": ["pro 1", "pro 2", "pro 3"],
+      "cons": ["con 1", "con 2"],
+      "merchants": []
+    },
+    {
+      "name": "Product name",
+      "price": "Price with currency",
+      "reason": "Short reason",
+      "pros": ["pro 1", "pro 2", "pro 3"],
+      "cons": ["con 1", "con 2"],
+      "merchants": []
+    },
+    {
+      "name": "Product name",
+      "price": "Price with currency",
+      "reason": "Short reason",
+      "pros": ["pro 1", "pro 2", "pro 3"],
+      "cons": ["con 1", "con 2"],
+      "merchants": []
+    }
+  ]
+}
 
-For each product provide:
-- Product Name
-- Score out of 100
-- Estimated Price
-- Why it is recommended
-
-Keep the answer concise.
+Provide recommendations for: ${category} under ${budget} ${currency} for country ${country}. Priority: ${priority}.
 `;
 
     const response = await ai.models.generateContent({
@@ -49,25 +67,18 @@ Keep the answer concise.
       contents: prompt,
     });
 
-    console.log(response);
-    console.log(response.text);
-
+    // Debug details removed
     return NextResponse.json({
       result: response.text,
-      debug: {
-        modelVersion: response.modelVersion,
-        responseId: response.responseId,
-      },
     });
   } catch (error) {
     console.error(error);
 
     const message =
       error instanceof Error ? error.message : String(error ?? "Unknown error");
-    const debug = error && typeof error === "object" ? { ...error } : { error: message };
 
     return NextResponse.json(
-      { error: `Unable to generate recommendation: ${message}`, debug },
+      { error: `Unable to generate recommendation: ${message}` },
       { status: 500 }
     );
   }

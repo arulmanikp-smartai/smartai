@@ -127,7 +127,72 @@ BuySmart AI is a Next.js application designed to help users find the best produc
 
 ---
 
+## Day 4 - Gemini AI Recommendations
+
+### ✅ Completed Tasks
+
+#### 1. **Switched from OpenRouter to Google Gemini API**
+   - **Issue Identified**: OpenRouter API returned "User not found" (401 Unauthorized) due to insufficient account credits
+   - **Decision**: Migrate to Google Gemini API for more reliable AI recommendation generation
+   - **Result**: API integration now uses Google's Gemini service
+
+#### 2. **Installed @google/genai Package**
+   - **Version**: v2.8.0
+   - **Command**: `npm install @google/genai`
+   - **Purpose**: Official SDK for Google Gemini API integration
+   - **Import**: `import { GoogleGenAI } from "@google/genai"`
+
+#### 3. **Created API Recommendation Endpoint**
+   - **File**: `src/app/api/recommend/route.ts` (new)
+   - **Method**: POST
+   - **Functionality**:
+     - Receives form data: `category`, `budget`, `country`, `priority`
+     - Uses Google Gemini 2.5 Flash model: `gemini-2.5-flash`
+     - Generates personalized product recommendations
+     - Returns recommendation text with debug payload
+   - **Error Handling**: Comprehensive try-catch with error messages and debug information
+   - **Status Codes**: 200 on success, 400 for missing fields, 500 for API errors
+
+#### 4. **Updated Environment Configuration**
+   - **File**: `.env.local`
+   - **Added**: `GEMINI_API_KEY=<api-key>`
+   - **Purpose**: Secure API authentication for Gemini requests
+   - **Security**: Key stored locally, not committed to version control
+
+#### 5. **Enhanced Homepage UI with Recommendations**
+   - **File**: `src/app/page.tsx` (updated)
+   - **New Features**:
+     - Form submission handler that sends POST request to `/api/recommend`
+     - State management for `recommendation`, `errorMessage`, `debugMessage`
+     - Display sections:
+       - ✅ **AI Recommendation**: Shows generated recommendations on success (styled in blue)
+       - ⚠️ **Error Display**: Shows error messages in red on failure
+       - 🔧 **Debug Details**: Shows API response debug payload in gray JSON panel
+     - Message clearing before each new submission for clean UX
+
+#### 6. **Added Debug Logging**
+   - Console logging in API route for response inspection
+   - Debug output helps validate response structure from Gemini API
+   - Observable via browser dev tools and server terminal
+
+#### 7. **Verified Integration & Performance**
+   - Development server tested with multiple form submissions
+   - API responses: 200 status codes ✅
+   - Response times: 6-17 seconds (acceptable for initial implementation)
+   - Form submission → API endpoint → Gemini processing → UI display works end-to-end
+
+#### 8. **Committed Day 4 Work**
+   - **Commit Message**: "Day 4 - Gemini AI recommendations"
+   - **Commit Hash**: `4eda81f`
+   - **Branch**: `day-3-state-management` (upstream tracking set)
+
+---
+
+| **Feature** | **Status** | **Notes** |
+|-----------|----------|---------|
 | **Turbopack** | Enabled | Fast bundler |
+| **Gemini API** | Integrated | Using gemini-2.5-flash model |
+| **Recommendations** | Working | Full end-to-end flow functional |
 
 ---
 
@@ -220,21 +285,51 @@ Use `@/` prefix to import from `src/` directory for cleaner imports.
 
 ---
 
-## Next Steps (Day 2+)
+## Next Steps
 
-- [ ] Create product search functionality
-- [ ] Set up API routes for backend
-- [ ] Implement database integration
-- [ ] Add product filtering by budget
-- [ ] Build user authentication
+- [x] Create product search functionality (Days 1-2)
+- [x] Set up API routes for backend (Day 4)
+- [x] Integrate AI (Gemini API) for recommendations (Day 4)
+- [ ] Implement database integration for product catalog
+- [ ] Add product filtering and comparison features
+- [ ] Build user authentication and personalization
+- [ ] Optimize API response times
+- [ ] Add more AI models or features
 - [ ] Deploy to production
+
+---
+
+## Day 5 Completed
+
+**Features Added:**
+- AI-generated product recommendations
+- 3 recommendation cards
+- Product name, price, reason, pros and cons
+- Dynamic merchant purchase links
+- USA and India retailer support
+- Clean recommendation card UI
+- JSON response parsing
+- Error handling for invalid AI responses
+
+**Current Progress:**
+- Day 1 Complete
+- Day 2 Complete
+- Day 3 Complete
+- Day 4 Complete
+- Day 5 Complete
+
+**Next Feature:**
+- Product Comparison Screen
 
 ---
 
 ## Git History
 
 ```
-854672f (HEAD -> main) Day 1 - BuySmart AI setup
+4eda81f (HEAD -> day-3-state-management) Day 4 - Gemini AI recommendations
+6440ac8 Day 3 - React state and form submission
+9fe56d5 Day 2 - Search form UI
+854672f Day 1 - BuySmart AI setup
 393a76d Initial commit from Create Next App
 ```
 
@@ -249,6 +344,6 @@ Use `@/` prefix to import from `src/` directory for cleaner imports.
 
 ---
 
-**Last Updated**: June 10, 2026  
-**Status**: ✅ Day 1 Complete
+**Last Updated**: June 13, 2026  
+**Status**: ✅ Day 4 Complete - Gemini AI Integration Working
 

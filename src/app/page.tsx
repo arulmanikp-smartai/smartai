@@ -2,22 +2,38 @@
 
 import { useState } from "react";
 
+type Merchant = { name: string; url: string };
+
+type RecommendationItem = {
+  name: string;
+  price: string;
+  reason?: string;
+  pros?: string[];
+  cons?: string[];
+  merchants?: Merchant[];
+};
+
 export default function Home() {
   const [category, setCategory] = useState("Phone");
   const [budget, setBudget] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [country, setCountry] = useState("USA");
   const [priority, setPriority] = useState("Best Value for Money");
   const [recommendation, setRecommendation] = useState("");
+  const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
-  const [debugMessage, setDebugMessage] = useState("");
 
   const [submitted, setSubmitted] = useState(false);
 
+  // Merchant links are generated per-item during parsing (see handleSubmit)
+
+  // parsing handled after fetch; keep parseFailed flag in state to show fallback
+  const [parseFailed, setParseFailed] = useState(false);
   const handleSubmit = async () => {
     setSubmitted(true);
     setRecommendation("");
+    setRecommendations([]);
     setErrorMessage("");
-    setDebugMessage("");
 
     const response = await fetch("/api/recommend", {
       method: "POST",
@@ -27,6 +43,7 @@ export default function Home() {
       body: JSON.stringify({
         category,
         budget,
+        currency,
         country,
         priority,
       }),
@@ -36,13 +53,75 @@ export default function Home() {
 
     if (!response.ok || data.error) {
       setErrorMessage(data.error || "Unknown error from API.");
-      setDebugMessage(JSON.stringify(data.debug || data, null, 2));
       return;
     }
 
-    setRecommendation(data.result || "No recommendation available");
-    if (data.debug) {
-      setDebugMessage(JSON.stringify(data.debug, null, 2));
+    try {
+      const parsed = data.result ? JSON.parse(data.result) : null;
+      let recs: RecommendationItem[] = [];
+
+      if (parsed && Array.isArray(parsed.recommendations)) {
+        recs = parsed.recommendations;
+      } else if (Array.isArray(parsed)) {
+        recs = parsed;
+      } else if (parsed && parsed.name) {
+        recs = [parsed];
+      }
+
+      // Normalize merchants and limit to 3
+      recs = recs.map((r: unknown) => {
+        const rr = r as {
+          name?: string;
+          price?: string;
+          reason?: string;
+          pros?: unknown;
+          cons?: unknown;
+          merchants?: unknown;
+        };
+
+        const item: RecommendationItem = {
+          name: rr.name || "",
+          price: rr.price || "",
+          reason: rr.reason || "",
+          pros: Array.isArray(rr.pros) ? (rr.pros as string[]) : [],
+          cons: Array.isArray(rr.cons) ? (rr.cons as string[]) : [],
+          merchants: Array.isArray(rr.merchants) ? (rr.merchants as Merchant[]) : [],
+        };
+
+        if (!item.merchants || item.merchants.length === 0) {
+          const encoded = encodeURIComponent(item.name);
+          if (country === "India" || country === "IN") {
+            item.merchants = [
+              { name: "Amazon India", url: `https://www.amazon.in/s?k=${encoded}` },
+              { name: "Flipkart", url: `https://www.flipkart.com/search?q=${encoded}` },
+              { name: "Croma", url: `https://www.croma.com/searchB?q=${encoded}` },
+            ];
+          } else {
+            item.merchants = [
+              { name: "Amazon", url: `https://www.amazon.com/s?k=${encoded}` },
+              { name: "Best Buy", url: `https://www.bestbuy.com/site/searchpage.jsp?st=${encoded}` },
+              { name: "Walmart", url: `https://www.walmart.com/search?q=${encoded}` },
+            ];
+          }
+        }
+
+        return item;
+      }).filter(Boolean).slice(0, 3);
+
+      if (recs.length > 0) {
+        setRecommendations(recs);
+        setRecommendation("");
+        setParseFailed(false);
+      } else {
+        setRecommendations([]);
+        setRecommendation(data.result || "No recommendation available");
+        setParseFailed(false);
+      }
+    } catch {
+      // suppress noisy console messages from bad AI output
+      setParseFailed(true);
+      setRecommendations([]);
+      setRecommendation(data.result || "No recommendation available");
     }
   };
 
@@ -85,6 +164,22 @@ export default function Home() {
               placeholder="Enter budget"
               className="w-full border rounded p-2"
             />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">
+              Currency
+            </label>
+
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="w-full border rounded p-2"
+            >
+              <option value="USD">USD</option>
+              <option value="INR">INR</option>
+              <option value="EUR">EUR</option>
+            </select>
           </div>
 
           <div>
@@ -140,31 +235,74 @@ export default function Home() {
           </div>
         )}
 
-        {recommendation && (
+        {recommendations.length > 0 ? (
           <div className="mt-6 border-t pt-4">
-            <h2 className="font-bold mb-2">
-              AI Recommendation
-            </h2>
+            <h2 className="font-bold mb-2">AI Recommendation</h2>
 
-            <pre className="whitespace-pre-wrap">
-              {recommendation}
-            </pre>
+            {recommendations.map((item, index) => (
+              <div
+                key={index}
+                style={{ border: "1px solid #ddd", borderRadius: 12, padding: 16, marginTop: 16, backgroundColor: "#fff" }}
+              >
+                <h3 className="text-lg font-semibold">{index + 1}. {item.name}</h3>
+
+                <p className="mt-2"><strong>Price:</strong> {item.price}</p>
+                {item.reason && (
+                  <p className="mt-1"><strong>Reason:</strong> {item.reason}</p>
+                )}
+
+                {item.pros && item.pros.length > 0 && (
+                  <div className="mt-3">
+                    <p className="font-medium">Pros</p>
+                    <ul className="list-disc list-inside">
+                      {item.pros.map((pro, i) => (
+                        <li key={i}>{pro}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {item.cons && item.cons.length > 0 && (
+                  <div className="mt-3">
+                    <p className="font-medium">Cons</p>
+                    <ul className="list-disc list-inside">
+                      {item.cons.map((con, i) => (
+                        <li key={i}>{con}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div style={{ marginTop: 10 }}>
+                  <p className="font-medium">Buy Links:</p>
+                  <div className="flex flex-wrap gap-3 mt-2">
+                    {item.merchants?.map((m, i) => (
+                      <a
+                        key={i}
+                        href={m.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline mr-2"
+                      >
+                        {m.name} - {item.name}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
+        ) : recommendation && parseFailed ? (
+          <div className="mt-6 border-t pt-4">
+            <h2 className="font-bold mb-2">AI Recommendation</h2>
+            <p>Unable to display recommendation.</p>
+          </div>
+        ) : null}
 
         {errorMessage && (
           <div className="mt-6 border-t pt-4 text-red-700">
             <h2 className="font-bold mb-2">Error</h2>
             <pre className="whitespace-pre-wrap">{errorMessage}</pre>
-          </div>
-        )}
-
-        {debugMessage && (
-          <div className="mt-6 border-t pt-4 text-sm text-slate-600">
-            <h2 className="font-bold mb-2">Debug Details</h2>
-            <pre className="whitespace-pre-wrap bg-slate-100 p-3 rounded">
-              {debugMessage}
-            </pre>
           </div>
         )}
       </div>
