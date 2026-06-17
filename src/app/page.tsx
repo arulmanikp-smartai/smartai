@@ -7,6 +7,10 @@ import ProductRating from "@/components/ProductRating";
 import ProductScore from "@/components/ProductScore";
 import SavedRecommendations from "@/components/SavedRecommendations";
 import SearchHistory from "@/components/SearchHistory";
+import {
+  getPrioritiesForCategory,
+  productCategories,
+} from "@/data/productOptions";
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 
@@ -120,12 +124,17 @@ const fieldStyle: CSSProperties = {
   color: "#111827",
 };
 
+const formGroupStyle: CSSProperties = {
+  marginBottom: "14px",
+};
+
 const headingStyle: CSSProperties = {
   color: "#111827",
 };
 
 const labelStyle: CSSProperties = {
   color: "#374151",
+  fontWeight: 600,
 };
 
 const normalTextStyle: CSSProperties = {
@@ -161,7 +170,7 @@ export default function Home() {
   const [budget, setBudget] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [country, setCountry] = useState("USA");
-  const [priority, setPriority] = useState("Best Value for Money");
+  const [priority, setPriority] = useState("Best Camera");
   const [recommendation, setRecommendation] = useState("");
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<RecommendationItem | null>(null);
@@ -256,11 +265,13 @@ export default function Home() {
   }
 
   function handleSelectHistory(item: SearchHistoryItem) {
+    const priorities = getPrioritiesForCategory(item.category);
+
     setCategory(item.category);
     setBudget(item.budget);
     setCurrency(item.currency);
     setCountry(item.country);
-    setPriority(item.priority);
+    setPriority(priorities.includes(item.priority) ? item.priority : priorities[0]);
   }
 
   function handleClearHistory() {
@@ -433,6 +444,8 @@ export default function Home() {
     displayedRecommendations.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   }
 
+  const priorityOptions = getPrioritiesForCategory(category);
+
   return (
     <main
       className="min-h-screen flex items-center justify-center p-6"
@@ -449,25 +462,29 @@ export default function Home() {
 
           <div className="space-y-4">
 
-            <div>
+            <div style={formGroupStyle}>
               <label className="block mb-1 font-medium" style={labelStyle}>
                 Category
               </label>
 
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => {
+                  const selectedCategory = e.target.value;
+                  setCategory(selectedCategory);
+                  setPriority(getPrioritiesForCategory(selectedCategory)[0]);
+                }}
                 style={fieldStyle}
               >
-                <option>Phone</option>
-                <option>Laptop</option>
-                <option>TV</option>
-                <option>Refrigerator</option>
-                <option>Washing Machine</option>
+                {productCategories.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
               </select>
             </div>
 
-            <div>
+            <div style={formGroupStyle}>
               <label className="block mb-1 font-medium" style={labelStyle}>
                 Budget
               </label>
@@ -481,7 +498,7 @@ export default function Home() {
               />
             </div>
 
-            <div>
+            <div style={formGroupStyle}>
               <label className="block mb-1 font-medium" style={labelStyle}>
                 Currency
               </label>
@@ -497,7 +514,7 @@ export default function Home() {
               </select>
             </div>
 
-            <div>
+            <div style={formGroupStyle}>
               <label className="block mb-1 font-medium" style={labelStyle}>
                 Country
               </label>
@@ -512,9 +529,9 @@ export default function Home() {
               </select>
             </div>
 
-            <div>
+            <div style={formGroupStyle}>
               <label className="block mb-1 font-medium" style={labelStyle}>
-                Priority
+                Shopping Priority
               </label>
 
               <select
@@ -522,11 +539,15 @@ export default function Home() {
                 onChange={(e) => setPriority(e.target.value)}
                 style={fieldStyle}
               >
-                <option>Best Value for Money</option>
-                <option>Best Performance</option>
-                <option>Best Battery Life</option>
-                <option>Best Camera</option>
+                {priorityOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
               </select>
+              <p className="mt-1" style={{ fontSize: "12px", color: "#4b5563" }}>
+                Priority options change based on selected category.
+              </p>
             </div>
 
             <button

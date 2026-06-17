@@ -82,40 +82,63 @@ export async function POST(req: Request) {
     }
 
     const prompt = `
-Return ONLY valid JSON. Do not include markdown. Do not include explanations. Do not wrap the JSON in code fences.
+You are BuySmart AI, a shopping recommendation assistant.
 
-Return exactly this structure with three recommendations:
+User selected:
+- Category: ${category}
+- Budget: ${budget} ${currency}
+- Country: ${country}
+- Priority: ${priority}
+
+Recommend exactly 3 real products that match the selected category, budget, country, and priority.
+
+Rules:
+- Products must be relevant to the selected category.
+- Respect the selected country.
+- Respect the selected budget.
+- Focus strongly on the selected priority.
+- Use realistic current market prices.
+- Return ONLY valid JSON.
+- Do not include markdown.
+- Do not include explanations outside JSON.
+- Do not wrap response in \`\`\`json.
+
+Return exactly this JSON structure:
 
 {
   "recommendations": [
     {
       "name": "Product name",
       "price": "Price with currency",
-      "reason": "Short reason",
+      "reason": "Short reason focused on the selected priority",
       "pros": ["pro 1", "pro 2", "pro 3"],
       "cons": ["con 1", "con 2"],
-      "merchants": []
+      "merchants": [],
+      "rating": 4,
+      "score": 90
     },
     {
       "name": "Product name",
       "price": "Price with currency",
-      "reason": "Short reason",
+      "reason": "Short reason focused on the selected priority",
       "pros": ["pro 1", "pro 2", "pro 3"],
       "cons": ["con 1", "con 2"],
-      "merchants": []
+      "merchants": [],
+      "rating": 4,
+      "score": 88
     },
     {
       "name": "Product name",
       "price": "Price with currency",
-      "reason": "Short reason",
+      "reason": "Short reason focused on the selected priority",
       "pros": ["pro 1", "pro 2", "pro 3"],
       "cons": ["con 1", "con 2"],
-      "merchants": []
+      "merchants": [],
+      "rating": 4,
+      "score": 85
     }
   ]
 }
-
-Provide recommendations for: ${category} under ${budget} ${currency} for country ${country}. Priority: ${priority}.
 `;
 
     const response = await ai.models.generateContent({
