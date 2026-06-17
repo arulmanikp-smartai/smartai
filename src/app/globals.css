@@ -54,6 +54,13 @@ a {
   gap: 16px;
 }
 
+.buysmart-controls-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: end;
+}
+
 .buysmart-item-card {
   background: #ffffff;
   border: 1px solid #d1d5db;
@@ -92,8 +99,42 @@ a {
   cursor: pointer;
 }
 
+.buysmart-score {
+  margin-top: 8px;
+}
+
+.buysmart-score-bar {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.buysmart-score-fill {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 999px;
+}
+
+.buysmart-badge {
+  display: inline-block;
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 @media (max-width: 800px) {
   .buysmart-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .buysmart-controls-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -1,8 +1,10 @@
 "use client";
 
+import ProductControls from "@/components/ProductControls";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import ProductComparison from "@/components/ProductComparison";
 import ProductRating from "@/components/ProductRating";
+import ProductScore from "@/components/ProductScore";
 import SavedRecommendations from "@/components/SavedRecommendations";
 import SearchHistory from "@/components/SearchHistory";
 import type { CSSProperties } from "react";
@@ -18,6 +20,7 @@ type Recommendation = {
   cons: string[];
   merchants?: Merchant[];
   rating?: number;
+  score?: number;
 };
 
 type RecommendationItem = Recommendation;
@@ -35,8 +38,66 @@ type SavedProduct = Recommendation & {
   savedAt: string;
 };
 
+type SortOption =
+  | "bestMatch"
+  | "priceLowHigh"
+  | "priceHighLow"
+  | "ratingHighLow"
+  | "scoreHighLow";
+
 const SEARCH_HISTORY_STORAGE_KEY = "buysmart_search_history";
 const SAVED_PRODUCTS_STORAGE_KEY = "buysmart_saved_products";
+const GEMINI_BUSY_ERROR =
+  "Gemini is temporarily busy. Please wait a few seconds and try again.";
+
+function extractPrice(price: string) {
+  const value = Number(price.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(value) ? value : 0;
+}
+
+function getDefaultRating(index: number) {
+  if (index === 0) {
+    return 5;
+  }
+
+  if (index === 1) {
+    return 4;
+  }
+
+  return 4;
+}
+
+function getDefaultScore(index: number) {
+  if (index === 0) {
+    return 95;
+  }
+
+  if (index === 1) {
+    return 88;
+  }
+
+  return 84;
+}
+
+function getCleanErrorMessage(error: unknown) {
+  const message = typeof error === "string" ? error : "Unknown error from API.";
+  const lowerMessage = message.toLowerCase();
+
+  if (
+    lowerMessage.includes("503") ||
+    lowerMessage.includes("high demand") ||
+    lowerMessage.includes("unavailable") ||
+    lowerMessage.includes("temporarily unavailable")
+  ) {
+    return GEMINI_BUSY_ERROR;
+  }
+
+  if (message.includes("{") || message.includes("}")) {
+    return "Unable to generate recommendation. Please try again.";
+  }
+
+  return message.replace(/^Unable to generate recommendation:\s*/i, "");
+}
 
 const pageStyle: CSSProperties = {
   backgroundColor: "#f5f7fb",
@@ -106,6 +167,8 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState<RecommendationItem | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [savedProducts, setSavedProducts] = useState<SavedProduct[]>([]);
+  const [sortOption, setSortOption] = useState<SortOption>("bestMatch");
+  const [showBestValueOnly, setShowBestValueOnly] = useState(false);
   const [hasLoadedLocalStorage, setHasLoadedLocalStorage] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -245,7 +308,7 @@ export default function Home() {
     const data = await response.json();
 
     if (!response.ok || data.error) {
-      setErrorMessage(data.error || "Unknown error from API.");
+      setErrorMessage(getCleanErrorMessage(data.error));
       return;
     }
 
@@ -271,6 +334,7 @@ export default function Home() {
           cons?: unknown;
           merchants?: unknown;
           rating?: unknown;
+          score?: unknown;
         };
 
         const item: RecommendationItem = {
@@ -280,7 +344,8 @@ export default function Home() {
           pros: Array.isArray(rr.pros) ? (rr.pros as string[]) : [],
           cons: Array.isArray(rr.cons) ? (rr.cons as string[]) : [],
           merchants: Array.isArray(rr.merchants) ? (rr.merchants as Merchant[]) : [],
-          rating: typeof rr.rating === "number" ? rr.rating : index === 0 ? 5 : 4,
+          rating: typeof rr.rating === "number" ? rr.rating : getDefaultRating(index),
+          score: typeof rr.score === "number" ? rr.score : getDefaultScore(index),
         };
 
         if (!item.merchants || item.merchants.length === 0) {
@@ -319,6 +384,54 @@ export default function Home() {
       setRecommendation(data.result || "No recommendation available");
     }
   };
+
+  const normalizedRecommendations = recommendations.map((item, index) => ({
+    ...item,
+    rating: item.rating ?? getDefaultRating(index),
+    score: item.score ?? getDefaultScore(index),
+  }));
+
+  const bestValueProductName = normalizedRecommendations.reduce<string>((bestName, item, index) => {
+    if (index === 0) {
+      return item.name;
+    }
+
+    const currentPrice = extractPrice(item.price);
+    const bestProduct = normalizedRecommendations.find((product) => product.name === bestName);
+    const bestPrice = bestProduct ? extractPrice(bestProduct.price) : 0;
+
+    if (currentPrice === 0 && bestPrice === 0) {
+      return bestName;
+    }
+
+    if (bestPrice === 0) {
+      return item.name;
+    }
+
+    if (currentPrice > 0 && currentPrice < bestPrice) {
+      return item.name;
+    }
+
+    return bestName;
+  }, "");
+
+  let displayedRecommendations = [...normalizedRecommendations];
+
+  if (showBestValueOnly) {
+    displayedRecommendations = displayedRecommendations.filter(
+      (item) => item.name === bestValueProductName
+    );
+  }
+
+  if (sortOption === "priceLowHigh") {
+    displayedRecommendations.sort((a, b) => extractPrice(a.price) - extractPrice(b.price));
+  } else if (sortOption === "priceHighLow") {
+    displayedRecommendations.sort((a, b) => extractPrice(b.price) - extractPrice(a.price));
+  } else if (sortOption === "ratingHighLow") {
+    displayedRecommendations.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+  } else if (sortOption === "scoreHighLow") {
+    displayedRecommendations.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  }
 
   return (
     <main
@@ -444,21 +557,35 @@ export default function Home() {
           )}
         </div>
 
-        {recommendations.length > 0 ? (
+        {normalizedRecommendations.length > 0 ? (
           <div className="mt-6 border-t pt-4" style={{ borderColor: "#d1d5db" }}>
+            <ProductControls
+              sortOption={sortOption}
+              onSortChange={setSortOption}
+              showBestValueOnly={showBestValueOnly}
+              onBestValueOnlyChange={setShowBestValueOnly}
+            />
+
             <h2 className="font-bold mb-2" style={headingStyle}>AI Recommendation</h2>
 
-            {recommendations.map((item, index) => (
+            {displayedRecommendations.map((item, index) => (
               <div
-                key={index}
+                key={`${item.name}-${index}`}
                 style={recommendationCardStyle}
               >
+                {item.name === bestValueProductName && (
+                  <span className="buysmart-badge">
+                    🏆 Best Value
+                  </span>
+                )}
+
                 <h3 className="text-lg font-semibold" style={headingStyle}>{index + 1}. {item.name}</h3>
 
                 <p className="mt-2" style={normalTextStyle}><strong>Price:</strong> {item.price}</p>
                 <div className="mt-2">
                   <ProductRating rating={item.rating} />
                 </div>
+                <ProductScore score={item.score} />
                 {item.reason && (
                   <p className="mt-1" style={secondaryTextStyle}><strong>Reason:</strong> {item.reason}</p>
                 )}
@@ -523,8 +650,8 @@ export default function Home() {
               </div>
             ))}
 
-            {recommendations.length === 3 && (
-              <ProductComparison products={recommendations} />
+            {normalizedRecommendations.length === 3 && (
+              <ProductComparison products={normalizedRecommendations} />
             )}
           </div>
         ) : recommendation && parseFailed ? (
@@ -546,9 +673,12 @@ export default function Home() {
         />
 
         {errorMessage && (
-          <div className="mt-6 border-t pt-4 text-red-700">
+          <div className="mt-6 border-t pt-4" style={{ borderColor: "#d1d5db", color: "#991b1b" }}>
             <h2 className="font-bold mb-2" style={{ color: "#991b1b" }}>Error</h2>
-            <pre className="whitespace-pre-wrap">{errorMessage}</pre>
+            <p>{errorMessage}</p>
+            <p className="mt-2" style={{ color: "#4b5563" }}>
+              Try again in 30 seconds.
+            </p>
           </div>
         )}
       </div>

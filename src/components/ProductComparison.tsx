@@ -1,5 +1,6 @@
 "use client";
 
+import ProductScore from "@/components/ProductScore";
 import type { CSSProperties, ReactNode } from "react";
 
 interface Product {
@@ -9,6 +10,7 @@ interface Product {
   pros: string[];
   cons: string[];
   rating?: number;
+  score?: number;
 }
 
 interface ProductComparisonProps {
@@ -57,7 +59,8 @@ const summaryStyle: CSSProperties = {
 };
 
 function extractPrice(price: string) {
-  return Number(price.replace(/[^0-9.]/g, ""));
+  const value = Number(price.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(value) ? value : 0;
 }
 
 function formatList(items: string[]): ReactNode {
@@ -80,8 +83,24 @@ export default function ProductComparison({ products }: ProductComparisonProps) 
   }
 
   const bestValueIndex = products.reduce((lowestIndex, product, index) => {
+    if (index === 0) {
+      return 0;
+    }
+
     const currentPrice = extractPrice(product.price);
     const lowestPrice = extractPrice(products[lowestIndex].price);
+
+    if (currentPrice === 0 && lowestPrice === 0) {
+      return lowestIndex;
+    }
+
+    if (lowestPrice === 0) {
+      return index;
+    }
+
+    if (currentPrice === 0) {
+      return lowestIndex;
+    }
 
     return currentPrice < lowestPrice ? index : lowestIndex;
   }, 0);
@@ -121,6 +140,8 @@ export default function ProductComparison({ products }: ProductComparisonProps) 
               <p style={{ color: "#111827" }}>
                 <strong>Rating:</strong> {product.rating ?? 4}/5
               </p>
+
+              <ProductScore score={product.score} />
 
               <div>
                 <p className="font-bold" style={{ color: "#111827" }}>

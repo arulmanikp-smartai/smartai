@@ -1,6 +1,7 @@
 "use client";
 
 import ProductRating from "@/components/ProductRating";
+import ProductScore from "./ProductScore";
 import type { CSSProperties, ReactNode } from "react";
 
 type Merchant = {
@@ -16,6 +17,7 @@ type Product = {
   cons: string[];
   merchants?: Merchant[];
   rating?: number;
+  score?: number;
 };
 
 type ProductDetailModalProps = {
@@ -78,6 +80,7 @@ export default function ProductDetailModal({
             <div className="mt-2">
               <ProductRating rating={product.rating} />
             </div>
+            <ProductScore score={product.score} />
           </div>
 
           <button
