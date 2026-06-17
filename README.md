@@ -224,6 +224,20 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Deployment
+
+BuySmart AI is deployed using Vercel.
+
+Production Deployment Steps:
+1. Push code to GitHub
+2. Connect GitHub repository to Vercel
+3. Add GEMINI_API_KEY in Vercel Environment Variables
+4. Deploy project
+5. Vercel generates public live URL
+
+Required Environment Variable:
+GEMINI_API_KEY
+
 ### Build & Production
 
 ```bash
