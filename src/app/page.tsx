@@ -1,19 +1,42 @@
 "use client";
 
+import ProductDetailModal from "@/components/ProductDetailModal";
 import ProductComparison from "@/components/ProductComparison";
+import ProductRating from "@/components/ProductRating";
+import SavedRecommendations from "@/components/SavedRecommendations";
+import SearchHistory from "@/components/SearchHistory";
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Merchant = { name: string; url: string };
 
-type RecommendationItem = {
+type Recommendation = {
   name: string;
   price: string;
   reason: string;
   pros: string[];
   cons: string[];
   merchants?: Merchant[];
+  rating?: number;
 };
+
+type RecommendationItem = Recommendation;
+
+type SearchHistoryItem = {
+  category: string;
+  budget: string;
+  currency: string;
+  country: string;
+  priority: string;
+  createdAt: string;
+};
+
+type SavedProduct = Recommendation & {
+  savedAt: string;
+};
+
+const SEARCH_HISTORY_STORAGE_KEY = "buysmart_search_history";
+const SAVED_PRODUCTS_STORAGE_KEY = "buysmart_saved_products";
 
 const pageStyle: CSSProperties = {
   backgroundColor: "#f5f7fb",
@@ -62,6 +85,16 @@ const recommendationCardStyle: CSSProperties = {
   marginTop: 16,
 };
 
+const viewDetailsButtonStyle: CSSProperties = {
+  backgroundColor: "#111827",
+  color: "#ffffff",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: 700,
+};
+
 export default function Home() {
   const [category, setCategory] = useState("Phone");
   const [budget, setBudget] = useState("");
@@ -70,18 +103,129 @@ export default function Home() {
   const [priority, setPriority] = useState("Best Value for Money");
   const [recommendation, setRecommendation] = useState("");
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<RecommendationItem | null>(null);
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+  const [savedProducts, setSavedProducts] = useState<SavedProduct[]>([]);
+  const [hasLoadedLocalStorage, setHasLoadedLocalStorage] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const [submitted, setSubmitted] = useState(false);
 
-  // Merchant links are generated per-item during parsing (see handleSubmit)
-
-  // parsing handled after fetch; keep parseFailed flag in state to show fallback
   const [parseFailed, setParseFailed] = useState(false);
+
+  useEffect(() => {
+    const loadStorage = window.setTimeout(() => {
+      try {
+        const storedHistory = localStorage.getItem(SEARCH_HISTORY_STORAGE_KEY);
+        const parsedHistory = storedHistory ? JSON.parse(storedHistory) : [];
+
+        if (Array.isArray(parsedHistory)) {
+          setSearchHistory(parsedHistory);
+        }
+      } catch {
+        setSearchHistory([]);
+      }
+
+      try {
+        const storedSavedProducts = localStorage.getItem(SAVED_PRODUCTS_STORAGE_KEY);
+        const parsedSavedProducts = storedSavedProducts ? JSON.parse(storedSavedProducts) : [];
+
+        if (Array.isArray(parsedSavedProducts)) {
+          setSavedProducts(parsedSavedProducts);
+        }
+      } catch {
+        setSavedProducts([]);
+      }
+
+      setHasLoadedLocalStorage(true);
+    }, 0);
+
+    return () => window.clearTimeout(loadStorage);
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedLocalStorage) {
+      return;
+    }
+
+    if (searchHistory.length === 0) {
+      localStorage.removeItem(SEARCH_HISTORY_STORAGE_KEY);
+      return;
+    }
+
+    localStorage.setItem(SEARCH_HISTORY_STORAGE_KEY, JSON.stringify(searchHistory));
+  }, [hasLoadedLocalStorage, searchHistory]);
+
+  useEffect(() => {
+    if (!hasLoadedLocalStorage) {
+      return;
+    }
+
+    if (savedProducts.length === 0) {
+      localStorage.removeItem(SAVED_PRODUCTS_STORAGE_KEY);
+      return;
+    }
+
+    localStorage.setItem(SAVED_PRODUCTS_STORAGE_KEY, JSON.stringify(savedProducts));
+  }, [hasLoadedLocalStorage, savedProducts]);
+
+  function addSearchToHistory() {
+    const newHistoryItem: SearchHistoryItem = {
+      category,
+      budget,
+      currency,
+      country,
+      priority,
+      createdAt: new Date().toLocaleString(),
+    };
+
+    setSearchHistory((prev) => {
+      const withoutDuplicate = prev.filter((item) => (
+        item.category !== category ||
+        item.budget !== budget ||
+        item.currency !== currency ||
+        item.country !== country ||
+        item.priority !== priority
+      ));
+
+      return [newHistoryItem, ...withoutDuplicate].slice(0, 10);
+    });
+  }
+
+  function handleSelectHistory(item: SearchHistoryItem) {
+    setCategory(item.category);
+    setBudget(item.budget);
+    setCurrency(item.currency);
+    setCountry(item.country);
+    setPriority(item.priority);
+  }
+
+  function handleClearHistory() {
+    setSearchHistory([]);
+    localStorage.removeItem(SEARCH_HISTORY_STORAGE_KEY);
+  }
+
+  function handleSaveProduct(product: Recommendation) {
+    const savedProduct: SavedProduct = {
+      ...product,
+      savedAt: new Date().toLocaleString(),
+    };
+
+    setSavedProducts((prev) => {
+      const withoutDuplicate = prev.filter((item) => item.name !== product.name);
+      return [savedProduct, ...withoutDuplicate].slice(0, 20);
+    });
+  }
+
+  function handleRemoveSaved(productName: string) {
+    setSavedProducts((prev) => prev.filter((item) => item.name !== productName));
+  }
+
   const handleSubmit = async () => {
     setSubmitted(true);
     setRecommendation("");
     setRecommendations([]);
+    setSelectedProduct(null);
     setErrorMessage("");
 
     const response = await fetch("/api/recommend", {
@@ -118,8 +262,7 @@ export default function Home() {
         recs = [parsedData];
       }
 
-      // Normalize merchants and limit to 3
-      recs = recs.map((r: unknown) => {
+      recs = recs.map((r: unknown, index) => {
         const rr = r as {
           name?: string;
           price?: string;
@@ -127,6 +270,7 @@ export default function Home() {
           pros?: unknown;
           cons?: unknown;
           merchants?: unknown;
+          rating?: unknown;
         };
 
         const item: RecommendationItem = {
@@ -136,6 +280,7 @@ export default function Home() {
           pros: Array.isArray(rr.pros) ? (rr.pros as string[]) : [],
           cons: Array.isArray(rr.cons) ? (rr.cons as string[]) : [],
           merchants: Array.isArray(rr.merchants) ? (rr.merchants as Merchant[]) : [],
+          rating: typeof rr.rating === "number" ? rr.rating : index === 0 ? 5 : 4,
         };
 
         if (!item.merchants || item.merchants.length === 0) {
@@ -162,13 +307,13 @@ export default function Home() {
         setRecommendations(recs);
         setRecommendation("");
         setParseFailed(false);
+        addSearchToHistory();
       } else {
         setRecommendations([]);
         setRecommendation(data.result || "No recommendation available");
         setParseFailed(false);
       }
     } catch {
-      // suppress noisy console messages from bad AI output
       setParseFailed(true);
       setRecommendations([]);
       setRecommendation(data.result || "No recommendation available");
@@ -181,121 +326,123 @@ export default function Home() {
       style={pageStyle}
     >
       <div
-        className="p-8 rounded-lg w-full max-w-md"
+        className="p-8 rounded-lg w-full max-w-6xl"
         style={appCardStyle}
       >
-        <h1 className="text-3xl font-bold text-center mb-6" style={headingStyle}>
-          BuySmart AI
-        </h1>
+        <div className="mx-auto max-w-md">
+          <h1 className="text-3xl font-bold text-center mb-6" style={headingStyle}>
+            BuySmart AI
+          </h1>
 
-        <div className="space-y-4">
+          <div className="space-y-4">
 
-          <div>
-            <label className="block mb-1 font-medium" style={labelStyle}>
-              Category
-            </label>
+            <div>
+              <label className="block mb-1 font-medium" style={labelStyle}>
+                Category
+              </label>
 
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={fieldStyle}
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                style={fieldStyle}
+              >
+                <option>Phone</option>
+                <option>Laptop</option>
+                <option>TV</option>
+                <option>Refrigerator</option>
+                <option>Washing Machine</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium" style={labelStyle}>
+                Budget
+              </label>
+
+              <input
+                type="number"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                placeholder="Enter budget"
+                style={fieldStyle}
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium" style={labelStyle}>
+                Currency
+              </label>
+
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                style={fieldStyle}
+              >
+                <option value="USD">USD</option>
+                <option value="INR">INR</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium" style={labelStyle}>
+                Country
+              </label>
+
+              <select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                style={fieldStyle}
+              >
+                <option>USA</option>
+                <option>India</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium" style={labelStyle}>
+                Priority
+              </label>
+
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                style={fieldStyle}
+              >
+                <option>Best Value for Money</option>
+                <option>Best Performance</option>
+                <option>Best Battery Life</option>
+                <option>Best Camera</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              className="w-full p-2 rounded"
+              style={{
+                backgroundColor: "#2563eb",
+                color: "#ffffff",
+                border: "1px solid #1d4ed8",
+                fontWeight: 700,
+              }}
             >
-              <option>Phone</option>
-              <option>Laptop</option>
-              <option>TV</option>
-              <option>Refrigerator</option>
-              <option>Washing Machine</option>
-            </select>
+              Get Recommendations
+            </button>
           </div>
 
-          <div>
-            <label className="block mb-1 font-medium" style={labelStyle}>
-              Budget
-            </label>
+          {submitted && (
+            <div className="mt-6 border-t pt-4" style={{ borderColor: "#d1d5db" }}>
+              <h2 className="font-bold mb-2" style={headingStyle}>
+                User Selection
+              </h2>
 
-            <input
-              type="number"
-              value={budget}
-              onChange={(e) => setBudget(e.target.value)}
-              placeholder="Enter budget"
-              style={fieldStyle}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium" style={labelStyle}>
-              Currency
-            </label>
-
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              style={fieldStyle}
-            >
-              <option value="USD">USD</option>
-              <option value="INR">INR</option>
-              <option value="EUR">EUR</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium" style={labelStyle}>
-              Country
-            </label>
-
-            <select
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              style={fieldStyle}
-            >
-              <option>USA</option>
-              <option>India</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium" style={labelStyle}>
-              Priority
-            </label>
-
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              style={fieldStyle}
-            >
-              <option>Best Value for Money</option>
-              <option>Best Performance</option>
-              <option>Best Battery Life</option>
-              <option>Best Camera</option>
-            </select>
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            className="w-full p-2 rounded"
-            style={{
-              backgroundColor: "#2563eb",
-              color: "#ffffff",
-              border: "1px solid #1d4ed8",
-              fontWeight: 700,
-            }}
-          >
-            Get Recommendations
-          </button>
+              <p style={normalTextStyle}>Category: {category}</p>
+              <p style={normalTextStyle}>Budget: {budget}</p>
+              <p style={normalTextStyle}>Country: {country}</p>
+              <p style={normalTextStyle}>Priority: {priority}</p>
+            </div>
+          )}
         </div>
-
-        {submitted && (
-          <div className="mt-6 border-t pt-4" style={{ borderColor: "#d1d5db" }}>
-            <h2 className="font-bold mb-2" style={headingStyle}>
-              User Selection
-            </h2>
-
-            <p style={normalTextStyle}>Category: {category}</p>
-            <p style={normalTextStyle}>Budget: {budget}</p>
-            <p style={normalTextStyle}>Country: {country}</p>
-            <p style={normalTextStyle}>Priority: {priority}</p>
-          </div>
-        )}
 
         {recommendations.length > 0 ? (
           <div className="mt-6 border-t pt-4" style={{ borderColor: "#d1d5db" }}>
@@ -309,6 +456,9 @@ export default function Home() {
                 <h3 className="text-lg font-semibold" style={headingStyle}>{index + 1}. {item.name}</h3>
 
                 <p className="mt-2" style={normalTextStyle}><strong>Price:</strong> {item.price}</p>
+                <div className="mt-2">
+                  <ProductRating rating={item.rating} />
+                </div>
                 {item.reason && (
                   <p className="mt-1" style={secondaryTextStyle}><strong>Reason:</strong> {item.reason}</p>
                 )}
@@ -352,6 +502,24 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    style={viewDetailsButtonStyle}
+                    onClick={() => setSelectedProduct(item)}
+                  >
+                    View Details
+                  </button>
+
+                  <button
+                    type="button"
+                    className="buysmart-button-success"
+                    onClick={() => handleSaveProduct(item)}
+                  >
+                    Save Product
+                  </button>
+                </div>
               </div>
             ))}
 
@@ -366,6 +534,17 @@ export default function Home() {
           </div>
         ) : null}
 
+        <SearchHistory
+          history={searchHistory}
+          onSelectHistory={handleSelectHistory}
+          onClearHistory={handleClearHistory}
+        />
+
+        <SavedRecommendations
+          savedProducts={savedProducts}
+          onRemoveSaved={handleRemoveSaved}
+        />
+
         {errorMessage && (
           <div className="mt-6 border-t pt-4 text-red-700">
             <h2 className="font-bold mb-2" style={{ color: "#991b1b" }}>Error</h2>
@@ -373,6 +552,10 @@ export default function Home() {
           </div>
         )}
       </div>
+      <ProductDetailModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
     </main>
   );
 }

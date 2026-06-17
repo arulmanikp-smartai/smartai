@@ -8,6 +8,7 @@ interface Product {
   reason: string;
   pros: string[];
   cons: string[];
+  rating?: number;
 }
 
 interface ProductComparisonProps {
@@ -15,7 +16,7 @@ interface ProductComparisonProps {
 }
 
 const sectionStyle: CSSProperties = {
-  marginTop: 20,
+  marginTop: 24,
   border: "1px solid #d1d5db",
   borderRadius: "12px",
   padding: 16,
@@ -23,24 +24,27 @@ const sectionStyle: CSSProperties = {
   color: "#111827",
 };
 
-const headerCellStyle: CSSProperties = {
+const comparisonCardStyle: CSSProperties = {
   border: "1px solid #d1d5db",
-  backgroundColor: "#f3f4f6",
-  color: "#111827",
-  fontWeight: 700,
-  padding: 12,
-};
-
-const cellStyle: CSSProperties = {
-  border: "1px solid #d1d5db",
+  borderRadius: "12px",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
   backgroundColor: "#ffffff",
   color: "#111827",
-  padding: 12,
+  minWidth: 0,
+  overflowWrap: "break-word",
+  padding: 16,
 };
 
-const bestValueCellStyle: CSSProperties = {
-  ...cellStyle,
-  backgroundColor: "#ecfdf5",
+const badgeStyle: CSSProperties = {
+  backgroundColor: "#dcfce7",
+  border: "1px solid #86efac",
+  borderRadius: "999px",
+  color: "#166534",
+  display: "inline-block",
+  fontSize: 12,
+  fontWeight: 700,
+  marginBottom: 8,
+  padding: "4px 10px",
 };
 
 const summaryStyle: CSSProperties = {
@@ -93,109 +97,60 @@ export default function ProductComparison({ products }: ProductComparisonProps) 
         Product Comparison
       </h2>
 
-      <div className="mt-4 overflow-x-auto">
-        <table
-          className="w-full min-w-[720px] border-collapse text-left text-sm"
-          style={{ backgroundColor: "#ffffff", color: "#111827" }}
-        >
-          <thead>
-            <tr>
-              <th style={headerCellStyle}>
-                Feature
-              </th>
-              {products.map((product, index) => (
-                <th
-                  key={`${product.name}-${index}`}
-                  style={{
-                    ...headerCellStyle,
-                    backgroundColor: index === bestValueIndex ? "#ecfdf5" : "#f3f4f6",
-                  }}
-                >
-                  Product {index + 1}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="align-top">
-            <tr>
-              <td className="font-medium" style={cellStyle}>
-                Product Name
-              </td>
-              {products.map((product, index) => (
-                <td
-                  key={`${product.name}-name-${index}`}
-                  style={index === bestValueIndex ? bestValueCellStyle : cellStyle}
-                >
-                  {index === bestValueIndex && (
-                    <span
-                      className="mb-2 inline-block rounded-full px-3 py-1 text-xs font-semibold"
-                      style={{
-                        backgroundColor: "#dcfce7",
-                        color: "#166534",
-                        border: "1px solid #86efac",
-                      }}
-                    >
-                      🏆 Best Value
-                    </span>
-                  )}
-                  <p className="font-semibold">{product.name}</p>
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <td className="font-medium" style={cellStyle}>
-                Price
-              </td>
-              {products.map((product, index) => (
-                <td
-                  key={`${product.name}-price-${index}`}
-                  style={index === bestValueIndex ? bestValueCellStyle : cellStyle}
-                >
-                  {product.price}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <td className="font-medium" style={cellStyle}>
-                Recommendation Reason
-              </td>
-              {products.map((product, index) => (
-                <td
-                  key={`${product.name}-reason-${index}`}
-                  style={index === bestValueIndex ? bestValueCellStyle : cellStyle}
-                >
+      <div className="product-comparison-grid mt-4">
+        {products.map((product, index) => (
+          <article
+            key={`${product.name}-${index}`}
+            style={comparisonCardStyle}
+          >
+            {index === bestValueIndex && (
+              <span style={badgeStyle}>
+                🏆 Best Value
+              </span>
+            )}
+
+            <h3 className="text-lg font-bold" style={{ color: "#111827" }}>
+              {product.name}
+            </h3>
+
+            <div className="mt-4 space-y-3">
+              <p style={{ color: "#111827" }}>
+                <strong>Price:</strong> {product.price}
+              </p>
+
+              <p style={{ color: "#111827" }}>
+                <strong>Rating:</strong> {product.rating ?? 4}/5
+              </p>
+
+              <div>
+                <p className="font-bold" style={{ color: "#111827" }}>
+                  Recommendation Reason
+                </p>
+                <p style={{ color: "#4b5563" }}>
                   {product.reason || "No reason provided"}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <td className="font-medium" style={cellStyle}>
-                Pros
-              </td>
-              {products.map((product, index) => (
-                <td
-                  key={`${product.name}-pros-${index}`}
-                  style={index === bestValueIndex ? bestValueCellStyle : cellStyle}
-                >
+                </p>
+              </div>
+
+              <div>
+                <p className="font-bold" style={{ color: "#111827" }}>
+                  Pros
+                </p>
+                <div style={{ color: "#111827" }}>
                   {formatList(product.pros)}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <td className="font-medium" style={cellStyle}>
-                Cons
-              </td>
-              {products.map((product, index) => (
-                <td
-                  key={`${product.name}-cons-${index}`}
-                  style={index === bestValueIndex ? bestValueCellStyle : cellStyle}
-                >
+                </div>
+              </div>
+
+              <div>
+                <p className="font-bold" style={{ color: "#111827" }}>
+                  Cons
+                </p>
+                <div style={{ color: "#111827" }}>
                   {formatList(product.cons)}
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
+                </div>
+              </div>
+            </div>
+          </article>
+        ))}
       </div>
 
       <div style={summaryStyle}>
