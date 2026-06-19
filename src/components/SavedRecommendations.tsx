@@ -1,6 +1,7 @@
 "use client";
 
 import ProductRating from "@/components/ProductRating";
+import { addAmazonAffiliate } from "@/lib/affiliateLinks";
 
 type Merchant = {
   name: string;
@@ -67,7 +68,7 @@ export default function SavedRecommendations({
                     {product.merchants.map((merchant, index) => (
                       <a
                         key={`${product.name}-${merchant.name}-${index}`}
-                        href={merchant.url}
+                        href={addAmazonAffiliate(merchant.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hover:underline"

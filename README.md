@@ -228,6 +228,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 BuySmart AI is deployed using Vercel.
 
+Version 1.0 is Deployed Live.
+
+Live App:
+https://buysmartai2.vercel.app
+
 Production Deployment Steps:
 1. Push code to GitHub
 2. Connect GitHub repository to Vercel

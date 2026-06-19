@@ -2,6 +2,7 @@
 
 import ProductRating from "@/components/ProductRating";
 import ProductScore from "./ProductScore";
+import { addAmazonAffiliate } from "@/lib/affiliateLinks";
 import type { CSSProperties, ReactNode } from "react";
 
 type Merchant = {
@@ -118,7 +119,7 @@ export default function ProductDetailModal({
                 {product.merchants.map((merchant, index) => (
                   <a
                     key={`${merchant.name}-${index}`}
-                    href={merchant.url}
+                    href={addAmazonAffiliate(merchant.url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline"

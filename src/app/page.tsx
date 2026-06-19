@@ -5,6 +5,7 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import ProductComparison from "@/components/ProductComparison";
 import ProductRating from "@/components/ProductRating";
 import ProductScore from "@/components/ProductScore";
+import { addAmazonAffiliate } from "@/lib/affiliateLinks";
 import SavedRecommendations from "@/components/SavedRecommendations";
 import SearchHistory from "@/components/SearchHistory";
 import {
@@ -639,7 +640,7 @@ export default function Home() {
                     {item.merchants?.map((m, i) => (
                       <a
                         key={i}
-                        href={m.url}
+                        href={addAmazonAffiliate(m.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hover:underline mr-2"
