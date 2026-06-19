@@ -634,19 +634,19 @@ export default function Home() {
                   </div>
                 )}
 
-                <div style={{ marginTop: 10 }}>
-                  <p className="font-medium" style={headingStyle}>Buy Links:</p>
-                  <div className="flex flex-wrap gap-3 mt-2">
-                    {item.merchants?.map((m, i) => (
+                <div className="mt-4">
+                  <p className="font-semibold mb-2">Buy Links:</p>
+
+                  <div className="flex flex-wrap gap-3">
+                    {item.merchants?.map((link, linkIndex) => (
                       <a
-                        key={i}
-                        href={addAmazonAffiliate(m.url)}
+                        key={linkIndex}
+                        href={addAmazonAffiliate(link.url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hover:underline mr-2"
-                        style={{ color: "#2563eb" }}
+                        className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
                       >
-                        {m.name} - {item.name}
+                        Buy on {link.name || "Amazon"}
                       </a>
                     ))}
                   </div>
