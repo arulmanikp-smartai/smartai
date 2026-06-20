@@ -84,6 +84,16 @@ function getDefaultScore(index: number) {
   return 84;
 }
 
+function isMerchant(value: unknown): value is Merchant {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const merchant = value as Partial<Merchant>;
+
+  return typeof merchant.name === "string" && typeof merchant.url === "string";
+}
+
 function getCleanErrorMessage(error: unknown) {
   const message = typeof error === "string" ? error : "Unknown error from API.";
   const lowerMessage = message.toLowerCase();
@@ -355,22 +365,31 @@ export default function Home() {
           reason: rr.reason || "",
           pros: Array.isArray(rr.pros) ? (rr.pros as string[]) : [],
           cons: Array.isArray(rr.cons) ? (rr.cons as string[]) : [],
-          merchants: Array.isArray(rr.merchants) ? (rr.merchants as Merchant[]) : [],
+          merchants: Array.isArray(rr.merchants)
+            ? rr.merchants.filter(isMerchant)
+            : [],
           rating: typeof rr.rating === "number" ? rr.rating : getDefaultRating(index),
           score: typeof rr.score === "number" ? rr.score : getDefaultScore(index),
         };
 
         if (!item.merchants || item.merchants.length === 0) {
           const encoded = encodeURIComponent(item.name);
+          const amazonUrl = addAmazonAffiliate(
+            `https://www.amazon.com/s?k=${encoded}`
+          );
+          const amazonIndiaUrl = addAmazonAffiliate(
+            `https://www.amazon.in/s?k=${encoded}`
+          );
+
           if (country === "India" || country === "IN") {
             item.merchants = [
-              { name: "Amazon India", url: `https://www.amazon.in/s?k=${encoded}` },
+              { name: "Amazon India", url: amazonIndiaUrl },
               { name: "Flipkart", url: `https://www.flipkart.com/search?q=${encoded}` },
               { name: "Croma", url: `https://www.croma.com/searchB?q=${encoded}` },
             ];
           } else {
             item.merchants = [
-              { name: "Amazon", url: `https://www.amazon.com/s?k=${encoded}` },
+              { name: "Amazon", url: amazonUrl },
               { name: "Best Buy", url: `https://www.bestbuy.com/site/searchpage.jsp?st=${encoded}` },
               { name: "Walmart", url: `https://www.walmart.com/search?q=${encoded}` },
             ];

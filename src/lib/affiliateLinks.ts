@@ -1,11 +1,19 @@
+export const AMAZON_ASSOCIATE_TAG = "buysmartai0d-20";
+
 export function addAmazonAffiliate(url: string): string {
-  const tag = process.env.NEXT_PUBLIC_AMAZON_TAG;
+  if (!url) return url;
 
-  if (!url || !url.includes("amazon.")) {
-    return url;
-  }
+  const isAmazonUrl =
+    url.includes("amazon.com") ||
+    url.includes("amazon.in");
 
-  const separator = url.includes("?") ? "&" : "?";
+  if (!isAmazonUrl) return url;
 
-  return `${url}${separator}tag=${tag}`;
+  const urlWithoutOldTag = url
+    .replace(/([?&])tag=[^&]+/g, "")
+    .replace(/[?&]$/, "");
+
+  const separator = urlWithoutOldTag.includes("?") ? "&" : "?";
+
+  return `${urlWithoutOldTag}${separator}tag=${AMAZON_ASSOCIATE_TAG}`;
 }
