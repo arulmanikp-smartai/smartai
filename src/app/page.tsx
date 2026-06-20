@@ -15,7 +15,12 @@ import {
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 
-type Merchant = { name: string; url: string };
+type Merchant = {
+  name: string;
+  url: string;
+  store?: string;
+  merchant?: string;
+};
 
 type Recommendation = {
   name: string;
@@ -663,9 +668,20 @@ export default function Home() {
                         href={addAmazonAffiliate(link.url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        style={{
+                          backgroundColor: "#2563eb",
+                          color: "#ffffff",
+                          fontWeight: 700,
+                          padding: "10px 18px",
+                          borderRadius: "8px",
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          minWidth: "140px",
+                        }}
                       >
-                        Buy on {link.name || "Amazon"}
+                        Buy on {link.store || link.merchant || link.name || "Amazon"}
                       </a>
                     ))}
                   </div>
