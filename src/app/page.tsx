@@ -663,7 +663,7 @@ export default function Home() {
                         href={addAmazonAffiliate(link.url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                       >
                         Buy on {link.name || "Amazon"}
                       </a>
